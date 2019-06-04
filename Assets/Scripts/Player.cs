@@ -48,7 +48,7 @@ public class Player : MonoBehaviour {
 				jumped = true;
 				Jump();
 			}
-		} else {		
+		} else if (!climbing) {		
 			velocity.y += gravity * (velocity.y < 0f && jumped ? 2f : 1f) * Time.deltaTime;
 		}
 
@@ -56,11 +56,13 @@ public class Player : MonoBehaviour {
 		anim.SetFloat("JumpY", Mathf.Clamp(velocity.y, -1f, 1f));
 
 		Move(inputH);
+		Climb(inputH, inputV);
 
-		Climb(inputV);
+		if (!climbing) {
+			// move the character left and right
+			controller.move(velocity * Time.deltaTime);
+		}
 
-		// move the character left and right
-		controller.move(velocity * Time.deltaTime);
 	}
 
 	void Move(float inputH) {
@@ -76,12 +78,12 @@ public class Player : MonoBehaviour {
 		}
 	}
 
-	void Climb(float inputV) {
+	void Climb(float inputH, float inputV) {
 		// is overlapping ladder
 		bool overLadder = false;		
 
 		// list of all hit objects overlapping point
-		Collider2D[] hits = Physics2D.OverlapPointAll(transform.position);
+		Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, centerRadius);
 		// loop through each point
 		foreach (Collider2D hit in hits) {
 			// if player overlaps ladder
@@ -97,8 +99,19 @@ public class Player : MonoBehaviour {
 			// set climbing to true
 			climbing = true;
 		}
+		if (!overLadder) {
+			climbing = false;
+		}
 		// if climbing
-		// climbing logic
+		if (climbing) {
+			// climbing logic
+			// translate character
+			Vector3 inputDir = new Vector3(inputH, inputV);
+			transform.Translate(inputDir * moveSpeed * Time.deltaTime);
+
+		}
+		anim.SetBool("IsClimbing", climbing);
+		anim.SetFloat("ClimbSpeed", inputV);
 
 	}
 
